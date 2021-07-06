@@ -1,0 +1,135 @@
+import React from "react";
+import createReactClass from "create-react-class";
+import * as PropTypes from "prop-types";
+import * as UserActions from "../../actions/userActions";
+import UserStore from "../../stores/userStore";
+import { Panel } from "react-bootstrap";
+
+const LoginView = createReactClass({
+  contextTypes: {
+    router: PropTypes.object.isRequired
+  },
+  getInitialState: function() {
+    return {
+      data: {},
+      status: "loading",
+      failed: false,
+      username: "",
+      password: ""
+    };
+  },
+  componentWillMount: function() {
+    this.unsubscribe = UserStore.listen(this._onChange);
+  },
+  componentWillUnmount() {
+    this.unsubscribe();
+  },
+  _onChange: function(data) {
+    console.log(data);
+    const { router } = this.context;
+    if (data.loginFailed) {
+      this.setState({ failed: true });
+      return;
+    }
+
+    if (data.isLoggedIn) {
+      router.replace("search");
+    }
+  },
+
+  render: function() {
+    const guestCredentials = process.env.GUEST_USERNAME && [
+      <hr key="0" />,
+      <div key="1">
+        Guest credentials: <br />
+        <b>username:</b> {process.env.GUEST_USERNAME} <br />
+        <b>password:</b> {process.env.GUEST_PASSWORD}
+      </div>
+    ];
+    return (
+      <div id="loginwrapper">
+        <div className="loginbody">
+          <section className="container row-fluid loginbox logincontainer">
+            
+            
+            <div>
+              <h4 style={{ textAlign: "center" }}>
+                
+              </h4>
+            </div>
+
+            <div className="loginA">
+              <form className="form-horizontal">
+                <p className="loginTextA">Sign In</p>
+                <input
+                  ref="user"
+                  type="text"
+                  id="username"
+                  name="username"
+                  placeholder="Username"
+                  className="loginInputUsername form-control"
+                  value={this.state.username}
+                  onChange={this.handleUsernameChange}
+                  onKeyDown={this.handleKeyDown}
+                />
+                <input
+                  ref="pass"
+                  type="password"
+                  id="password"
+                  name="password"
+                  placeholder="Password"
+                  className="loginInputPassword form-control"
+                  value={this.state.password}
+                  onChange={this.handlePasswordChange}
+                  onKeyDown={this.handleKeyDown}
+                />
+                {this.state.failed && (
+                  <p style={{ color: "red" }}>
+                    {" "}
+                    Login Failed. Please try again.{" "}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  className="btn submit btn_dicoogle"
+                  onClick={this.onLoginClick}
+                >
+                  Login
+                </button>
+                {guestCredentials}
+              </form>
+            </div>
+          </section>
+
+          {/*to fill the empty space between the login and footer*/}
+          <div id="filler" />
+
+          <footer id="footer">
+            
+          </footer>
+        </div>
+      </div>
+    );
+  },
+
+  handleKeyDown(e) {
+    if (e.keyCode === 13) {
+      this.onLoginClick();
+    }
+  },
+
+  handleUsernameChange(e) {
+    this.setState({ username: e.target.value });
+  },
+
+  handlePasswordChange(e) {
+    this.setState({ password: e.target.value });
+  },
+
+  onLoginClick() {
+    const { username, password } = this.state;
+    UserActions.login(username, password);
+  }
+});
+
+export default LoginView;
