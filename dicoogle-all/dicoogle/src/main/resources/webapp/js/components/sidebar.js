@@ -42,7 +42,7 @@ const Sidebar = createReactClass({
     console.log("Is admin: " + isAdmin);
 
     let sidebarInstance = (
-      <div style={{opacity: "0.3"}}>
+      <div>
         <ul className="sidebar-nav">
           {menuItems.map(function(e, i) {
             const to = (e.isPlugin ? "/ext/" : "/") + e.value;

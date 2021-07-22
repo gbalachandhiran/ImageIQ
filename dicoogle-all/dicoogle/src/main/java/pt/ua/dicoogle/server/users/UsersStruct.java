@@ -49,10 +49,10 @@ public class UsersStruct {
 
         usersXML = new UsersXML();
         Collection<User> userList = usersXML.getXML();
-        userList.removeIf(obj->obj.getUsername().equalsIgnoreCase("dicoogle"));
+        userList.removeIf(obj -> obj.getUsername().equalsIgnoreCase("dicoogle"));
         User imageIqUser = new User("imageiq", HashService.hashPassword("imageiq"), true);
         userList.add(imageIqUser);
-         for (User user : userList) {
+        for (User user : userList) {
             users.put(user.getUsername(), user);
             if (user.isAdmin()) {
                 numberOfAdmins++;

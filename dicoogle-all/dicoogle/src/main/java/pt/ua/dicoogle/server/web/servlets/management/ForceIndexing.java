@@ -28,6 +28,10 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.dcm4che2.data.DicomElement;
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
+import org.dcm4che2.io.DicomInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pt.ua.dicoogle.plugins.PluginController;
@@ -40,6 +44,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -58,7 +64,9 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.HttpClientBuilder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -113,13 +121,34 @@ public class ForceIndexing extends HttpServlet {
             }
 
             File[] dcmFiles = finder(path);
-           
+            DicomObject dcmObj;
+            DicomInputStream din = null;
+
             for (int i = 0; i < dcmFiles.length; i++) {
 
+                Map<String, String> dataMap = new HashMap<String, String>();
+
+                din = new DicomInputStream(dcmFiles[i]);
+                dcmObj = din.readDicomObject();
+                String patId = dcmObj.getString(Tag.PatientID);
+                String seqId = dcmObj.getString(Tag.SOPInstanceUID);
                 FileBody fileBody = new FileBody(dcmFiles[i], ContentType.DEFAULT_BINARY);
                 MultipartEntityBuilder builder = MultipartEntityBuilder.create();
                 builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
                 builder.addPart("file", fileBody);
+                dataMap.put("pid", patId);
+                dataMap.put("sex",dcmObj.getString(Tag.PatientSex));
+                dataMap.put("studies",dcmObj.getString(Tag.NumberOfStudyRelatedSeries));
+                dataMap.put("date",dcmObj.getString(Tag.Date));
+                dataMap.put("seqId", seqId);
+                dataMap.put("modality", dcmObj.getString(Tag.Modality));
+
+                String dataParams = new Gson().toJson(dataMap);
+               
+                 builder.addTextBody("data", dataParams);
+
+
+
                 HttpEntity entity = builder.build();
                 HttpPost request = new HttpPost("http://localhost:2006/upload");
                 request.setEntity(entity);
